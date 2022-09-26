@@ -1,5 +1,7 @@
 # IDE
 .idea/
+.git/
+__pycache__/
 
 # virtual env
 .python-version
