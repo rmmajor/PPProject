@@ -17,4 +17,5 @@ Flask==2.2.2
     - MarkupSafe [required: >=2.0]
   - Werkzeug [required: >=2.2.2]
     - MarkupSafe [required: >=2.1.1]
+    
 waitress==2.1.2
