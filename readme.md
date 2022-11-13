@@ -1,21 +1,22 @@
 
-## Needed dependencies
+# Встановити проєкт
 
-Pyton==3.7.6
-
-Flask==2.2.2
-  - click [required: >=8.0]
-    - colorama [required: Any]
-    - importlib-metadata [required: Any]
-      - typing-extensions [required: >=3.6.4]
-      - zipp [required: >=0.5]
-  - importlib-metadata [required: >=3.6.0]
-    - typing-extensions [required: >=3.6.4]
-    - zipp [required: >=0.5]
-  - itsdangerous [required: >=2.0]
-  - Jinja2 [required: >=3.0]
-    - MarkupSafe [required: >=2.0]
-  - Werkzeug [required: >=2.2.2]
-    - MarkupSafe [required: >=2.1.1]
+    Клонувати з гіта
+    Найкраще запустити зразу з Pycharm і вибрати в налаштуваннях інтерпретатора pipenv
+    Варто перевірити, чи вибрано посилання на еxe файл
     
-waitress==2.1.2
+# Для pipenv
+    pipenv install
+    pipenv local <версія пайтона>
+    pipenv update 
+    pipenv shell
+
+# SQLALCHEMY/ALEMBIC команди для створення бази//
+    alembic revision --autogenerate -m "Create models"   
+    alembic upgrade head
+
+# Запуск сервера
+    waitress-serve main:app
+
+# Запити через постман
+
