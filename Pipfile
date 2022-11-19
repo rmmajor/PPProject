@@ -11,6 +11,8 @@ alembic = "*"
 flask-bcrypt = "*"
 marshmallow = "*"
 blueprint = "*"
+mysqlclient = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 

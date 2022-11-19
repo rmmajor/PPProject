@@ -32,6 +32,7 @@ def get_tickets_by(model_class, param, **kwargs):               # Виводит
 def get_entry_by_username(model_class, username, **kwargs):     # Вивід користувача за нікнеймом
     session = Session()
     return session.query(model_class).filter_by(username=username, **kwargs).one()
+    # return session.query(model_class).filter_by(username=username, **kwargs).first_or_404(description="User not found")
 
 
 def update_entry(entry, *, commit=True, **kwargs):      # Для путів
