@@ -5,10 +5,9 @@ from flask_bcrypt import check_password_hash
 from marshmallow import ValidationError
 from functools import wraps
 from sqlalchemy import exc
-
+from datetime import datetime
 from schemas import *
 from models import *
-import util_func
 import db_util
 
 
@@ -50,11 +49,8 @@ def admin_required():
                 return fn(*args, **kwargs)
             else:
                 return jsonify(msg="Admins only!"), 403
-
         return decorator
-
     return wrapper
-
 
 # Створеня користувача
 @app.route("/user", methods=["POST"])
@@ -64,7 +60,7 @@ def user():
         t_user = db_util.create_entry(User, **user_data)
         return jsonify(UserData().dump(t_user))
     except ValidationError as err:          # Може вибити, якщо вказані не унікальні ім'я користувача, email і номер
-        return str(err), 400                # телефону
+        return jsonify({"Error": "Wrong Data!"}), 400                # телефону
     except exc.IntegrityError as err:
         return jsonify({"Error": "User already exists"}), 400
 
@@ -86,7 +82,7 @@ def login_user():
             return jsonify({'Error': 'Wrong password'}), 401
 
     except exc.NoResultFound:
-        return jsonify("Error404: User not found"), 404
+        return jsonify({"Error": "User not found"}), 404
 
     except UnicodeEncodeError:
         return jsonify({'Error': 'Wrong password'}), 401
@@ -99,7 +95,7 @@ def get_user_by_username(username):
         t_user = db_util.get_entry_by_username(User, username)
         return jsonify(UserData().dump(t_user))
     except exc.NoResultFound:
-        return jsonify("Error404: User not found"), 404
+        return jsonify({"Error": "User not found"}), 404
 
 
 @app.route("/user/<string:username>", methods=["PUT"])
@@ -110,8 +106,6 @@ def upd_user_by_username(username):
         t_user = db_util.get_entry_by_username(User, username)
         db_util.update_entry(t_user, **user_data)
         return "User update", 200
-    except exc.NoResultFound:
-        return jsonify("Error404: User not found"), 404
     except ValidationError as err:
         return str(err), 400
     except exc.IntegrityError as err:
@@ -121,24 +115,20 @@ def upd_user_by_username(username):
 @app.route("/user/<string:username>", methods=["DELETE"])
 @validate_user()
 def delete_user_by_username(username):
-    try:
-        user_tickets = db_util.get_tickets_by(Ticket, username)  # Каскадне видалення зі всіма квитками
-        for i in user_tickets:
-            db_util.delete_entry(Ticket, i.id)
-        db_util.delete_entry_by_username(User, username)
-        return "User and user's tickets are deleted", 200
-    except exc.NoResultFound:
-        return jsonify("Error404: User not found"), 404
+    user_tickets = db_util.get_tickets_by(Ticket, username)  # Каскадне видалення зі всіма квитками
+    for i in user_tickets:
+        db_util.delete_entry(Ticket, i.id)
+    db_util.delete_entry_by_username(User, username)
+    return "User and user's tickets are deleted", 200
 
 
 # Шукає всі квитки для користувача з ніком
 @app.route("/user/<string:username>/tickets", methods=["GET"])
+@validate_user()
 def get_user_tick(username):
-    try:
-        user_tickets = db_util.get_tickets_by(Ticket, username)
-        return jsonify(TicketData().dump(user_tickets, many=True))
-    except exc.NoResultFound:
-        return jsonify("Error404: User not found"), 404
+    user_tickets = db_util.get_tickets_by(Ticket, username)
+    return jsonify(TicketData().dump(user_tickets, many=True))
+
 
 
 # Створює подію
@@ -147,11 +137,11 @@ def get_user_tick(username):
 def post_event():
     try:
         event_data = EventToDo().load(request.json)
-        if util_func.check_if_past_time(event_data['datatime']):    # Перевірка чи вказана дата не є
+        if check_if_past_time(event_data['datatime']):    # Перевірка чи вказана дата не є
             t_event = db_util.create_entry(Event, **event_data)     # минулою, сьогоднішньою та не через 10 років
             return jsonify(EventData().dump(t_event))
         else:
-            return "Error400: This is not proper date", 400
+            return jsonify({"Error": "This is not proper date"}), 400
     except ValidationError as err:                                  # Може вибити, якщо ім'я події повторюється
         return str(err), 400
     except exc.IntegrityError as err:
@@ -164,7 +154,7 @@ def get_event(idevent):
         event = db_util.get_entry_byid(Event, idevent)
         return jsonify(EventData().dump(event))
     except exc.NoResultFound:
-        return jsonify("Error404: Event not found"), 404
+        return jsonify({"Error" : "Event not found"}), 404
 
 
 @app.route("/event/<int:idevent>", methods=["PUT"])
@@ -175,7 +165,7 @@ def upd_event(idevent):
         event = db_util.get_entry_byid(Event, idevent)
 
         if 'datatime' in event_data and \
-                not util_func.check_if_past_time(event_data['datatime']):  # Перевірка на час події
+                not check_if_past_time(event_data['datatime']):  # Перевірка на час події
             return "Error400: This is not proper date", 400
         else:
             db_util.update_entry(event, **event_data)
@@ -205,12 +195,12 @@ def delete_event(idevent):
 # Знаходить всі куплені або зарезервовані квитки для події
 @app.route("/event/<int:eid>/tickets", methods=["GET"])
 def get_event_ticket(eid):
-    try:
+    #try:
         eid = int(eid)
         ticket_list = db_util.get_tickets_by(Ticket, eid)
         return jsonify(TicketData().dump(ticket_list, many=True))
-    except exc.NoResultFound:
-        return jsonify("Error404: Event not found"), 404
+    #except exc.NoResultFound:
+        #return jsonify({"Error": "Event not found"}), 404
 
 
 # Методи для квитка
@@ -269,6 +259,26 @@ def ticket_delete(tid):
         return "User's deleted", 200
     except exc.NoResultFound:
         return jsonify("Error404: Ticket not found"), 404
+
+
+def check_if_past_time(date):
+    now = str(datetime.now())
+    res = False
+    year = int(date[0] + date[1] + date[2] + date[3]) - int(now[0] + now[1] + now[2] + now[3])
+    print(year)
+    month = int(date[5] + date[6]) - int(now[5] + now[6])
+    print(month)
+    day = int(date[8] + date[9]) - int(now[8] + now[9])
+    print(day)
+    if year == 0:
+        if month == 0:
+            if day > 0:
+                res = True
+        elif month > 0:
+            res = True
+    elif 0 < year < 5:
+        res = True
+    return res
 
 
 if __name__ == '__main__':

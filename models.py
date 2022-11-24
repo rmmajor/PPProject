@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DATETIME
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session
 
-engine = create_engine('mysql://root:123456@localhost:3306/ppdb')
+
+engine = create_engine('mssql+pymssql://sa:Pass123!@localhost/pp_var_8')
 SessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(SessionFactory)
 Base = declarative_base()
