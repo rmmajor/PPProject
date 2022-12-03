@@ -79,6 +79,27 @@ paths:
       security:
         - admin_auth:
             - write:event
+    get:
+      tags:
+        - event
+      summary: Get event
+      description: Get info about event by id
+      parameters:
+        - name: id
+          in: path
+          description: id of updated event
+          required: true
+          schema:
+            type: string
+      responses:
+        '404':
+          description: event not found
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
   /event/{id}/tickets:
     get:
       tags:
@@ -414,7 +435,10 @@ components:
           type: integer
           format: int64
           example: 10
-        adress:
+        name:
+          type: string
+          example: Name of Event
+        address:
           type: string
           example: st. Steapana Bandery 16
         datetime:

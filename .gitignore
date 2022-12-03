@@ -4,6 +4,6 @@
 __pycache__/
 
 # virtual env
-.python-version
-Pipfile
-Pipfile.lock
+#.python-version
+#Pipfile
+#Pipfile.lock
